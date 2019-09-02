@@ -1,0 +1,51 @@
+monthly_caclulation
+-----------------------
+(id)
+(uc) year
+(uc) month
+
+expenses
+-------------
+(pk) monthly_caclulation_id -> monthly_caclulation.id
+(pk) card_id -> cards.id
+amount
+
+incomes
+----------
+(pk) monthly_caclulation_id -> monthly_caclulation.id
+(pk) person_id -> persons.id
+amount
+comment
+
+personal_expenses
+# Personal expenses amongst common expenses
+--------------------
+(pk) id
+monthly_caclulation_id -> monthly_caclulation.id
+person_id -> persons.id
+category_id -> categories.id
+amount
+comment
+
+categories
+-------------
+(pk) id
+name
+comment
+
+cards
+---------
+(pk) id
+name
+comment
+
+card_owners
+------------
+(pk) card_id -> cards.id
+(pk) owner_id -> persons.id
+
+persons
+-----------
+(pk) id
+name
+
