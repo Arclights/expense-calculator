@@ -1,0 +1,29 @@
+dependencies {
+    jooqRuntime("org.postgresql:postgresql:42.2.6")
+}
+
+jooq {
+    version = "3.12.1"
+    expensecalculator(sourceSets.main) {
+        jdbc {
+            driver = 'org.postgresql.Driver'
+            url = 'jdbc:postgresql://127.0.0.1:5432/expense_calculator'
+            user = 'postgres'
+            password = 'secret'
+        }
+        generator {
+            name = 'org.jooq.codegen.DefaultGenerator'
+            database {
+                name = 'org.jooq.meta.postgres.PostgresDatabase'
+                inputSchema = 'expense_calculator'
+            }
+            generate {
+                pojos = true
+                daos = true
+            }
+            target {
+                packageName = 'com.arclights.expensecalculator.db'
+            }
+        }
+    }
+}
