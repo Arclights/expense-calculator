@@ -12,3 +12,9 @@ data class Card(
         val name: String,
         val comment: String
 )
+
+data class Category(
+        val id: UUID?,
+        val name: String,
+        val comment: String
+)
