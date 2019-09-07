@@ -2,13 +2,17 @@ DROP SCHEMA IF EXISTS expense_calculator;
 
 CREATE SCHEMA expense_calculator;
 
+GRANT USAGE ON SCHEMA expense_calculator TO expenser;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Table: expense_calculator.cards
 
 -- DROP TABLE expense_calculator.cards;
 
 CREATE TABLE expense_calculator.cards
 (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
     comment text COLLATE pg_catalog."default",
     CONSTRAINT cards_pkey PRIMARY KEY (id)
@@ -30,7 +34,7 @@ GRANT ALL ON TABLE expense_calculator.cards TO postgres;
 
 CREATE TABLE expense_calculator.persons
 (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT persons_pkey PRIMARY KEY (id)
 )
@@ -81,7 +85,7 @@ GRANT ALL ON TABLE expense_calculator.card_owners TO postgres;
 
 CREATE TABLE expense_calculator.categories
 (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
     comment text COLLATE pg_catalog."default",
     CONSTRAINT categories_pkey PRIMARY KEY (id)
@@ -104,7 +108,7 @@ GRANT ALL ON TABLE expense_calculator.categories TO postgres;
 
 CREATE TABLE expense_calculator.monthly_calculations
 (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     year integer NOT NULL,
     month integer NOT NULL,
     comment text COLLATE pg_catalog."default",
@@ -191,7 +195,7 @@ GRANT ALL ON TABLE expense_calculator.incomes TO postgres;
 
 CREATE TABLE expense_calculator.personal_expense_corrections
 (
-    id uuid NOT NULL,
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
     monthly_claculation_id uuid NOT NULL,
     person_id uuid NOT NULL,
     category_id uuid NOT NULL,
