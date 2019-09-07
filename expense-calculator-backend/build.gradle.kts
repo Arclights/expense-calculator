@@ -40,8 +40,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.flywaydb:flyway-core")
     implementation("org.postgresql:postgresql:42.2.6")
-//    implementation("log4j:log4j:1.2.16")
-//    implementation("org.slf4j:slf4j-log4j12:1.7.5")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")

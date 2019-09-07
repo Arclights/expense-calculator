@@ -18,7 +18,6 @@ jooq {
                 inputSchema = 'expense_calculator'
             }
             generate {
-                pojos = true
                 daos = true
             }
             target {
