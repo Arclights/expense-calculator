@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Repository
-class PersonDao(val dsl: DefaultDSLContext) {
+class PersonDao(private val dsl: DefaultDSLContext) {
 
     fun getAllPersons(): Flux<Person> = Flux
         .from(

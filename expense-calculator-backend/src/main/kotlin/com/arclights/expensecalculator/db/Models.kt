@@ -6,3 +6,9 @@ data class Person(
         val id: UUID?,
         val name: String
 )
+
+data class Card(
+        val id: UUID?,
+        val name: String,
+        val comment: String
+)
