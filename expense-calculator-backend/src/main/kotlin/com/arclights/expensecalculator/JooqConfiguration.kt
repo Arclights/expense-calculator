@@ -1,5 +1,6 @@
 package com.arclights.expensecalculator
 
+import org.jooq.SQLDialect
 import org.jooq.impl.DataSourceConnectionProvider
 import org.jooq.impl.DefaultConfiguration
 import org.jooq.impl.DefaultDSLContext
@@ -30,11 +31,11 @@ class JooqConfiguration(
 
     @Bean
     fun dataSource(): DataSource = PGSimpleDataSource()
-            .apply {
-                setURL(dbUrl)
-                user = dbUserName
-                password = dbPassword
-            }
+        .apply {
+            setURL(dbUrl)
+            user = dbUserName
+            password = dbPassword
+        }
 
     @Bean
     fun transactionAwareDataSource(dataSource: DataSource): TransactionAwareDataSourceProxy = TransactionAwareDataSourceProxy(dataSource)
@@ -52,9 +53,10 @@ class JooqConfiguration(
     fun dsl(dataSource: DataSource, exceptionTransformer: ExceptionTranslator): DefaultDSLContext = DefaultDSLContext(configuration(dataSource, exceptionTransformer))
 
     fun configuration(dataSource: DataSource, exceptionTransformer: ExceptionTranslator): DefaultConfiguration = DefaultConfiguration()
-            .let {
-                it.set(connectionProvider(dataSource))
-                it.set(DefaultExecuteListenerProvider(exceptionTransformer))
-                return it
-            }
+        .let {
+            it.set(connectionProvider(dataSource))
+            it.set(DefaultExecuteListenerProvider(exceptionTransformer))
+            it.setSQLDialect(SQLDialect.POSTGRES)
+            return it
+        }
 }
