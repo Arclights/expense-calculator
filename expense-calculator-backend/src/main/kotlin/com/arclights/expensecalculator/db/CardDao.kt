@@ -5,6 +5,7 @@ import org.jooq.Record3
 import org.jooq.impl.DefaultDSLContext
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.UUID
 
 @Repository
@@ -14,6 +15,14 @@ class CardDao(private val dsl: DefaultDSLContext) {
         .from(
                 dsl.select(CARDS.ID, CARDS.NAME, CARDS.COMMENT)
                     .from(CARDS)
+        )
+        .map(this::mapCard)
+
+    fun getCard(id: UUID): Mono<Card> = Mono
+        .from(
+                dsl.select(CARDS.ID, CARDS.NAME, CARDS.COMMENT)
+                    .from(CARDS)
+                    .where(CARDS.ID.eq(id))
         )
         .map(this::mapCard)
 
