@@ -18,3 +18,8 @@ data class Category(
         val name: String,
         val comment: String
 )
+
+data class CardOwnership(
+        val card: Card,
+        val owners: List<Person>
+)
