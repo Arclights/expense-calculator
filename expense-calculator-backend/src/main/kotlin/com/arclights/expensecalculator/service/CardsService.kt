@@ -12,21 +12,21 @@ import java.util.UUID
 class CardsService(private val cardDao: CardDao, private val cardOwnershipDao: CardOwnershipDao) {
 
     @Transactional
-    fun createUpdateCard(card: Card): Mono<Card> = cardDao.createUpdateCard(card.toDbCard())
+    fun createUpdateCard(cardWithOwnership: CardWithOwnership): Mono<CardWithOwnership> = cardDao.createUpdateCard(cardWithOwnership.toDbCard())
         .map { it.id }
         .flatMap { id -> Mono.justOrEmpty(id) }
         .flatMap { cardId ->
             cardOwnershipDao
                 .deleteOwnershipsForCard(cardId)
-                .flatMapMany { Flux.fromIterable(card.owners) }
+                .flatMapMany { Flux.fromIterable(cardWithOwnership.owners) }
                 .flatMap { it.id?.let { ownerId -> cardOwnershipDao.createCardOwnership(cardId, ownerId) } }
                 .collectList()
                 .flatMap { getCard(cardId) }
         }
 
-    fun getCards(): Flux<Card> = cardOwnershipDao.getCardOwnerships()
-        .map { Card.fromDbModel(it) }
+    fun getCards(): Flux<CardWithOwnership> = cardOwnershipDao.getCardOwnerships()
+        .map { CardWithOwnership.fromDbModel(it) }
 
-    fun getCard(id: UUID): Mono<Card> = cardOwnershipDao.getOwnershipForCard(id)
-        .map { Card.fromDbModel(it) }
+    fun getCard(id: UUID): Mono<CardWithOwnership> = cardOwnershipDao.getOwnershipForCard(id)
+        .map { CardWithOwnership.fromDbModel(it) }
 }

@@ -1,16 +1,7 @@
-DROP SCHEMA IF EXISTS expense_calculator;
-
-CREATE SCHEMA expense_calculator;
-
-GRANT USAGE ON SCHEMA expense_calculator TO expenser;
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Table: expense_calculator.cards
-
--- DROP TABLE expense_calculator.cards;
-
-CREATE TABLE expense_calculator.cards
+-- Table: cards
+CREATE TABLE cards
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
@@ -20,19 +11,16 @@ CREATE TABLE expense_calculator.cards
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.cards
+ALTER TABLE cards
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.cards TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE cards TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.cards TO postgres;
+GRANT ALL ON TABLE cards TO postgres;
 
 
--- Table: expense_calculator.persons
-
--- DROP TABLE expense_calculator.persons;
-
-CREATE TABLE expense_calculator.persons
+-- Table: persons
+CREATE TABLE persons
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
@@ -41,49 +29,43 @@ CREATE TABLE expense_calculator.persons
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.persons
+ALTER TABLE persons
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.persons TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE persons TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.persons TO postgres;
+GRANT ALL ON TABLE persons TO postgres;
 
 
--- Table: expense_calculator.card_owners
-
--- DROP TABLE expense_calculator.card_owners;
-
-CREATE TABLE expense_calculator.card_owners
+-- Table: card_owners
+CREATE TABLE card_owners
 (
     card_id uuid NOT NULL,
     owner_id uuid NOT NULL,
     CONSTRAINT card_owners_pkey PRIMARY KEY (card_id, owner_id),
     CONSTRAINT card FOREIGN KEY (card_id)
-        REFERENCES expense_calculator.cards (id) MATCH SIMPLE
+        REFERENCES cards (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
     CONSTRAINT owner FOREIGN KEY (owner_id)
-        REFERENCES expense_calculator.persons (id) MATCH SIMPLE
+        REFERENCES persons (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.card_owners
+ALTER TABLE card_owners
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.card_owners TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE card_owners TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.card_owners TO postgres;
+GRANT ALL ON TABLE card_owners TO postgres;
 
 
 
--- Table: expense_calculator.categories
-
--- DROP TABLE expense_calculator.categories;
-
-CREATE TABLE expense_calculator.categories
+-- Table: categories
+CREATE TABLE categories
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name text COLLATE pg_catalog."default" NOT NULL,
@@ -93,20 +75,17 @@ CREATE TABLE expense_calculator.categories
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.categories
+ALTER TABLE categories
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.categories TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE categories TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.categories TO postgres;
+GRANT ALL ON TABLE categories TO postgres;
 
 
 
--- Table: expense_calculator.monthly_calculations
-
--- DROP TABLE expense_calculator.monthly_calculations;
-
-CREATE TABLE expense_calculator.monthly_calculations
+-- Table: monthly_calculations
+CREATE TABLE monthly_calculations
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     year integer NOT NULL,
@@ -119,19 +98,16 @@ CREATE TABLE expense_calculator.monthly_calculations
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.monthly_calculations
+ALTER TABLE monthly_calculations
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.monthly_calculations TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE monthly_calculations TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.monthly_calculations TO postgres;
+GRANT ALL ON TABLE monthly_calculations TO postgres;
 
 
--- Table: expense_calculator.expenses
-
--- DROP TABLE expense_calculator.expenses;
-
-CREATE TABLE expense_calculator.expenses
+-- Table: expenses
+CREATE TABLE expenses
 (
     monthly_calculation_id uuid NOT NULL,
     card_id uuid NOT NULL,
@@ -139,30 +115,27 @@ CREATE TABLE expense_calculator.expenses
     comment text COLLATE pg_catalog."default",
     CONSTRAINT expenses_pkey PRIMARY KEY (monthly_calculation_id, card_id),
     CONSTRAINT expenses_card_id_fkey FOREIGN KEY (card_id)
-        REFERENCES expense_calculator.cards (id) MATCH SIMPLE
+        REFERENCES cards (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
     CONSTRAINT expenses_monthly_calculation_id_fkey FOREIGN KEY (monthly_calculation_id)
-        REFERENCES expense_calculator.monthly_calculations (id) MATCH SIMPLE
+        REFERENCES monthly_calculations (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.expenses
+ALTER TABLE expenses
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.expenses TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expenses TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.expenses TO postgres;
+GRANT ALL ON TABLE expenses TO postgres;
 
 
--- Table: expense_calculator.incomes
-
--- DROP TABLE expense_calculator.incomes;
-
-CREATE TABLE expense_calculator.incomes
+-- Table: incomes
+CREATE TABLE incomes
 (
     monthly_calculation_id uuid NOT NULL,
     person_id uuid NOT NULL,
@@ -170,57 +143,54 @@ CREATE TABLE expense_calculator.incomes
     comment text COLLATE pg_catalog."default",
     CONSTRAINT incomes_pkey PRIMARY KEY (monthly_calculation_id, person_id),
     CONSTRAINT incomes_monthly_calculation_id_fkey FOREIGN KEY (monthly_calculation_id)
-        REFERENCES expense_calculator.monthly_calculations (id) MATCH SIMPLE
+        REFERENCES monthly_calculations (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
     CONSTRAINT incomes_person_id_fkey FOREIGN KEY (person_id)
-        REFERENCES expense_calculator.persons (id) MATCH SIMPLE
+        REFERENCES persons (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.incomes
+ALTER TABLE incomes
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.incomes TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE incomes TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.incomes TO postgres;
+GRANT ALL ON TABLE incomes TO postgres;
 
 
--- Table: expense_calculator.personal_expense_corrections
-
--- DROP TABLE expense_calculator.personal_expense_corrections;
-
-CREATE TABLE expense_calculator.personal_expense_corrections
+-- Table: personal_expense_corrections
+CREATE TABLE personal_expense_corrections
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    monthly_claculation_id uuid NOT NULL,
+    monthly_calculation_id uuid NOT NULL,
     person_id uuid NOT NULL,
     category_id uuid NOT NULL,
     amount double precision NOT NULL,
     comment text COLLATE pg_catalog."default",
     CONSTRAINT personal_expense_corrections_pkey PRIMARY KEY (id),
     CONSTRAINT personal_expense_corrections_category_id_fkey FOREIGN KEY (category_id)
-        REFERENCES expense_calculator.categories (id) MATCH SIMPLE
+        REFERENCES categories (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT personal_expense_corrections_monthly_claculation_id_fkey FOREIGN KEY (monthly_claculation_id)
-        REFERENCES expense_calculator.monthly_calculations (id) MATCH SIMPLE
+    CONSTRAINT personal_expense_corrections_monthly_calculation_id_fkey FOREIGN KEY (monthly_calculation_id)
+        REFERENCES monthly_calculations (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
     CONSTRAINT personal_expense_corrections_person_id_fkey FOREIGN KEY (person_id)
-        REFERENCES expense_calculator.persons (id) MATCH SIMPLE
+        REFERENCES persons (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
-ALTER TABLE expense_calculator.personal_expense_corrections
+ALTER TABLE personal_expense_corrections
     OWNER to postgres;
 
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE expense_calculator.personal_expense_corrections TO expenser;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE personal_expense_corrections TO expenser;
 
-GRANT ALL ON TABLE expense_calculator.personal_expense_corrections TO postgres;
+GRANT ALL ON TABLE personal_expense_corrections TO postgres;

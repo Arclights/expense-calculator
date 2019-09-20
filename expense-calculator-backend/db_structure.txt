@@ -9,6 +9,7 @@ expenses
 (pk) monthly_caclulation_id -> monthly_caclulation.id
 (pk) card_id -> cards.id
 amount
+comment
 
 incomes
 ----------

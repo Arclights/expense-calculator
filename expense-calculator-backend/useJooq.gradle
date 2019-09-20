@@ -17,9 +17,7 @@ jooq {
                 name = 'org.jooq.meta.postgres.PostgresDatabase'
                 inputSchema = 'expense_calculator'
             }
-            generate {
-                daos = true
-            }
+            generate {}
             target {
                 packageName = 'com.arclights.expensecalculator.db'
             }

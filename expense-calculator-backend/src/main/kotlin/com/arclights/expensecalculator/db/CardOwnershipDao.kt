@@ -25,7 +25,7 @@ class CardOwnershipDao(private val dsl: DefaultDSLContext) {
                     .where(CARD_OWNERS.CARD_ID.eq(cardId))
         )
 
-    fun getCardOwnerships(): Flux<CardOwnership> = Flux
+    fun getCardOwnerships(): Flux<CardWithOwnership> = Flux
         .from(
                 dsl.select()
                     .from(CARDS)
@@ -36,7 +36,7 @@ class CardOwnershipDao(private val dsl: DefaultDSLContext) {
         .map { it.collectList().map(this::mapOwnership) }
         .flatMap { it.flux() }
 
-    fun getOwnershipForCard(cardId: UUID): Mono<CardOwnership> = Flux
+    fun getOwnershipForCard(cardId: UUID): Mono<CardWithOwnership> = Flux
         .from(
                 dsl.select(CARDS.ID, CARDS.NAME, CARDS.COMMENT, PERSONS.ID, PERSONS.NAME)
                     .from(CARDS)
@@ -47,7 +47,7 @@ class CardOwnershipDao(private val dsl: DefaultDSLContext) {
         .collectList()
         .map { mapOwnership(it) }
 
-    private fun mapOwnership(r: List<Record>): CardOwnership = CardOwnership(
+    private fun mapOwnership(r: List<Record>): CardWithOwnership = CardWithOwnership(
             mapCard(r.first()),
             r.filter { it.get(PERSONS.ID) != null }.map { mapPerson(it) }
     )

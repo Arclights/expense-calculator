@@ -1,6 +1,6 @@
 package com.arclights.expensecalculator.http.controllers
 
-import com.arclights.expensecalculator.service.Card
+import com.arclights.expensecalculator.service.CardWithOwnership
 import com.arclights.expensecalculator.service.CardsService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,13 +19,13 @@ import java.util.UUID
 class CardsController(private val cardsService: CardsService) {
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseBody()
-    fun createUpdateCard(@RequestBody card: Card): Mono<Card> = cardsService.createUpdateCard(card)
+    fun createUpdateCard(@RequestBody cardWithOwnership: CardWithOwnership): Mono<CardWithOwnership> = cardsService.createUpdateCard(cardWithOwnership)
 
     @GetMapping
     @ResponseBody
-    fun getCards(): Flux<Card> = cardsService.getCards()
+    fun getCards(): Flux<CardWithOwnership> = cardsService.getCards()
 
     @GetMapping(path = ["/{id}"])
     @ResponseBody
-    fun getCard(@PathVariable id: UUID): Mono<Card> = cardsService.getCard(id)
+    fun getCard(@PathVariable id: UUID): Mono<CardWithOwnership> = cardsService.getCard(id)
 }

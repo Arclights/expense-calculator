@@ -25,9 +25,10 @@ repositories {
 }
 
 flyway {
-    url = "jdbc:postgresql://127.0.0.1:5432/expense_calculator"
+    url = "jdbc:postgresql://localhost:5432/expense_calculator"
     user = "postgres"
     password = "secret"
+    schemas = arrayOf("public")
 }
 
 dependencies {
