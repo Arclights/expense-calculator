@@ -15,7 +15,7 @@ jooq {
             name = 'org.jooq.codegen.DefaultGenerator'
             database {
                 name = 'org.jooq.meta.postgres.PostgresDatabase'
-                inputSchema = 'expense_calculator'
+                inputSchema = 'public'
             }
             generate {}
             target {
