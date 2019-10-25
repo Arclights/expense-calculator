@@ -1,18 +1,12 @@
 package com.arclights.expensecalculator.db
 
-import com.arclights.expensecalculator.db.Tables.CARDS
-import com.arclights.expensecalculator.db.Tables.CATEGORIES
-import com.arclights.expensecalculator.db.Tables.EXPENSES
-import com.arclights.expensecalculator.db.Tables.INCOMES
-import com.arclights.expensecalculator.db.Tables.MONTHLY_CALCULATIONS
-import com.arclights.expensecalculator.db.Tables.PERSONAL_EXPENSE_CORRECTIONS
-import com.arclights.expensecalculator.db.Tables.PERSONS
+import com.arclights.expensecalculator.db.Tables.*
 import org.jooq.Record
 import org.jooq.impl.DefaultDSLContext
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.UUID
+import java.util.*
 
 private val INCOME_PERSONS = PERSONS.`as`("IncomePerson")
 private val EXPENSE_PERSONS = PERSONS.`as`("ExpensePerson")
@@ -65,11 +59,12 @@ class CalculationDao(
                     .leftJoin(PERSONAL_EXPENSE_CORRECTIONS).on(PERSONAL_EXPENSE_CORRECTIONS.MONTHLY_CALCULATION_ID.eq(MONTHLY_CALCULATIONS.ID))
                     .leftJoin(CATEGORIES).on(PERSONAL_EXPENSE_CORRECTIONS.CATEGORY_ID.eq(CATEGORIES.ID))
                     .leftJoin(CARDS).on(CARDS.ID.eq(EXPENSES.CARD_ID))
-                    .leftJoin(INCOME_PERSONS).on(PERSONS.ID.eq(INCOMES.PERSON_ID))
-                    .leftJoin(EXPENSE_PERSONS).on(PERSONS.ID.eq(PERSONAL_EXPENSE_CORRECTIONS.PERSON_ID))
+                    .leftJoin(INCOME_PERSONS).on(INCOME_PERSONS.ID.eq(INCOMES.PERSON_ID))
+                    .leftJoin(EXPENSE_PERSONS).on(EXPENSE_PERSONS.ID.eq(PERSONAL_EXPENSE_CORRECTIONS.PERSON_ID))
                     .where(MONTHLY_CALCULATIONS.YEAR.eq(year).and(MONTHLY_CALCULATIONS.MONTH.eq(month)))
         )
         .collectList()
+        .flatMap { r -> if (r.isEmpty()) Mono.empty() else Mono.just(r) }
         .map { mapCalculation(it) }
 
     fun createUpdateCalculation(c: Calculation): Mono<Calculation> =
@@ -123,6 +118,7 @@ private fun mapCalculation(r: List<Record>) = with(r) {
 }
 
 private fun mapIncomes(r: List<Record>): List<Income> = r.distinctBy { it.get(INCOMES.PERSON_ID) }
+    .filter { it.get(INCOMES.AMOUNT) != null }
     .map {
         Income(
                 it.get(INCOMES.AMOUNT).toBigDecimal(),
@@ -134,6 +130,7 @@ private fun mapIncomes(r: List<Record>): List<Income> = r.distinctBy { it.get(IN
 private fun mapIncomePerson(r: Record): Person = Person(r.get(INCOME_PERSONS.ID), r.get(INCOME_PERSONS.NAME))
 
 private fun mapExpenses(r: List<Record>): List<Expense> = r.distinctBy { it.get(EXPENSES.CARD_ID) }
+    .filter{it.get(EXPENSES.AMOUNT) != null}
     .map {
         Expense(
                 it.get(EXPENSES.AMOUNT).toBigDecimal(),
@@ -143,6 +140,7 @@ private fun mapExpenses(r: List<Record>): List<Expense> = r.distinctBy { it.get(
     }
 
 private fun mapPersonalExpenses(r: List<Record>): List<PersonalExpense> = r.distinctBy { it.get(PERSONAL_EXPENSE_CORRECTIONS.ID) }
+    .filter{it.get(EXPENSE_PERSONS.ID) != null && it.get(PERSONAL_EXPENSE_CORRECTIONS.ID) != null}
     .groupBy { it.get(PERSONAL_EXPENSE_CORRECTIONS.PERSON_ID) }
     .map { e ->
         PersonalExpense(

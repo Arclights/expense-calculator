@@ -32,8 +32,8 @@ data class Calculation(
         val id: UUID?,
         val year: Int,
         val month: Int,
-        val personalCalculations: List<PersonCalculation>,
-        val expenses: List<Expense>
+        val personalCalculations: List<PersonCalculation> = emptyList(),
+        val expenses: List<Expense> = emptyList()
 )
 
 data class PersonCalculation(

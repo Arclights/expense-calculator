@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-@RestController("/calculation")
-@RequestMapping(path = ["/calculation"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RestController("/calculations")
+@RequestMapping(path = ["/calculations"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class CalculationController(private val calculationService: CalculationService) {
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseBody

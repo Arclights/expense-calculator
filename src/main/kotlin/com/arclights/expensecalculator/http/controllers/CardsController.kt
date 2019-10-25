@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono
 import java.util.UUID
 
 @RestController
-@RequestMapping(path = ["/card"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(path = ["/cards"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class CardsController(private val cardsService: CardsService) {
     @PutMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseBody()
