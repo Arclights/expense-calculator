@@ -7,61 +7,66 @@ import org.jooq.impl.DefaultDSLContext
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.UUID
 
 @Repository
 class ExpensesDao(private val dsl: DefaultDSLContext) {
 
-    fun createUpdateExpenses(calculationId: UUID, expenses: List<Expense>): Flux<Expense> =
-            Flux.mergeSequential(expenses.map { createOrUpdateExpense(calculationId, it) })
+    fun createUpdateExpenses(calculationId: CalculationId, expenses: List<Expense>): Flux<Pair<CalculationId, CardId>> =
+        Flux.mergeSequential(expenses.map { createOrUpdateExpense(calculationId, it) })
 
-    fun createOrUpdateExpense(calculationId: UUID, expense: Expense): Mono<Expense> =
-            getExpense(calculationId, expense.card)
-                .flatMap { updateExpense(calculationId, expense) }
-                .switchIfEmpty(Mono.defer { createExpense(calculationId, expense) })
+    fun createOrUpdateExpense(calculationId: CalculationId, expense: Expense): Mono<Pair<CalculationId, CardId>> =
+        getExpense(calculationId, expense.card)
+            .flatMap { updateExpense(calculationId, expense) }
+            .switchIfEmpty(Mono.defer { createExpense(calculationId, expense) })
 
-    private fun createExpense(calculationId: UUID, expense: Expense): Mono<Expense> = Mono
+    private fun createExpense(calculationId: CalculationId, expense: Expense): Mono<Pair<CalculationId, CardId>> = Mono
         .fromCallable {
-            dsl.insertInto(EXPENSES, EXPENSES.MONTHLY_CALCULATION_ID, EXPENSES.CARD_ID, EXPENSES.AMOUNT, EXPENSES.COMMENT)
+            dsl.insertInto(
+                EXPENSES,
+                EXPENSES.MONTHLY_CALCULATION_ID,
+                EXPENSES.CARD_ID,
+                EXPENSES.AMOUNT,
+                EXPENSES.COMMENT
+            )
                 .values(calculationId, expense.card.id, expense.amount.toDouble(), expense.comment)
-                .returning()
+                .returning(EXPENSES.MONTHLY_CALCULATION_ID, EXPENSES.CARD_ID)
                 .fetchOne()
         }
-        .map { mapExpense(it) }
+        .map { it.monthlyCalculationId to it.cardId }
 
-    private fun updateExpense(calculationId: UUID, expense: Expense): Mono<Expense> = Mono
+    private fun updateExpense(calculationId: CalculationId, expense: Expense): Mono<Pair<CalculationId, CardId>> = Mono
         .fromCallable {
             dsl.update(EXPENSES)
                 .set(EXPENSES.AMOUNT, expense.amount.toDouble())
                 .set(EXPENSES.COMMENT, expense.comment)
                 .where(EXPENSES.MONTHLY_CALCULATION_ID.eq(calculationId))
                 .and(EXPENSES.CARD_ID.eq(expense.card.id))
-                .returning()
+                .returning(EXPENSES.MONTHLY_CALCULATION_ID, EXPENSES.CARD_ID)
                 .fetchOne()
         }
-        .map { mapExpense(it) }
+        .map { it.monthlyCalculationId to it.cardId }
 
-    fun getExpense(calculationId: UUID, card: Card): Mono<Expense> = Mono
+    fun getExpense(calculationId: CalculationId, card: Card): Mono<Expense> = Mono
         .from(
-                dsl.select(
-                        EXPENSES.MONTHLY_CALCULATION_ID,
-                        EXPENSES.CARD_ID,
-                        EXPENSES.AMOUNT,
-                        EXPENSES.COMMENT,
-                        CARDS.ID,
-                        CARDS.NAME,
-                        CARDS.COMMENT
-                )
-                    .from(EXPENSES)
-                    .leftJoin(CARDS).on(CARDS.ID.eq(EXPENSES.CARD_ID))
-                    .where(EXPENSES.MONTHLY_CALCULATION_ID.eq(calculationId))
-                    .and(EXPENSES.CARD_ID.eq(card.id))
+            dsl.select(
+                EXPENSES.MONTHLY_CALCULATION_ID,
+                EXPENSES.CARD_ID,
+                EXPENSES.AMOUNT,
+                EXPENSES.COMMENT,
+                CARDS.ID,
+                CARDS.NAME,
+                CARDS.COMMENT
+            )
+                .from(EXPENSES)
+                .leftJoin(CARDS).on(CARDS.ID.eq(EXPENSES.CARD_ID))
+                .where(EXPENSES.MONTHLY_CALCULATION_ID.eq(calculationId))
+                .and(EXPENSES.CARD_ID.eq(card.id))
         )
         .map { mapExpense(it) }
 }
 
 private fun mapExpense(r: Record): Expense = Expense(
-        r.get(EXPENSES.AMOUNT).toBigDecimal(),
-        r.get(EXPENSES.COMMENT),
-        mapCard(r)
+    r.get(EXPENSES.AMOUNT).toBigDecimal(),
+    r.get(EXPENSES.COMMENT),
+    mapCard(r)
 )

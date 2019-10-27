@@ -8,10 +8,10 @@ import java.util.UUID
 import com.arclights.expensecalculator.db.Card as dbCard
 
 data class CardWithOwnership(
-        val id: UUID?,
-        val name: String,
-        val comment: String,
-        val owners: List<Person>
+    val id: UUID?,
+    val name: String,
+    val comment: String?,
+    val owners: List<Person>
 ) {
     fun toDbCard() = dbCard(id, name, comment)
 
@@ -23,40 +23,39 @@ data class CardWithOwnership(
 }
 
 data class Card(
-        val id: UUID?,
-        val name: String,
-        val comment: String
+    val id: UUID?,
+    val name: String,
+    val comment: String?
 )
 
 data class Calculation(
-        val id: UUID?,
-        val year: Int,
-        val month: Int,
-        val personalCalculations: List<PersonCalculation> = emptyList(),
-        val expenses: List<Expense> = emptyList()
+    val id: UUID?,
+    val year: Int,
+    val month: Int,
+    val personalCalculations: List<PersonCalculation> = emptyList(),
+    val expenses: List<Expense> = emptyList()
 )
 
 data class PersonCalculation(
-        val person: Person,
-        val income: Income,
-        val expenseCorrections: List<PersonalExpenseCorrection>
+    val person: Person,
+    val income: Income,
+    val expenseCorrections: List<PersonalExpenseCorrection>
 )
 
 data class Income(
-        val amount: BigDecimal,
-        val comment: String,
-        val person: Person
+    val amount: BigDecimal,
+    val comment: String?
 )
 
 data class PersonalExpenseCorrection(
-        val id: UUID?,
-        val amount: BigDecimal,
-        val comment: String,
-        val category: Category
+    val id: UUID?,
+    val amount: BigDecimal,
+    val comment: String?,
+    val category: Category
 )
 
 data class Expense(
-        val amount: BigDecimal,
-        val comment: String,
-        val card: Card
+    val amount: BigDecimal,
+    val comment: String?,
+    val card: Card
 )

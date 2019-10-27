@@ -17,125 +17,126 @@ class CalculationService(private val calculationDao: CalculationDao) {
     fun getAvailableCalculations(): Flux<CalculationListing> = calculationDao.listAvailableCalculations()
 
     fun createUpdateCalculation(calculation: Calculation): Mono<Calculation> =
-            Mono.just(calculation.toDbModel())
-                .flatMap { calculationDao.createUpdateCalculation(it) }
-                .map { it.toServiceModel() }
+        Mono.just(calculation.toDbModel())
+            .flatMap { calculationDao.createUpdateCalculation(it) }
+            .map { it.toServiceModel() }
 
 }
 
 private fun Calculation.toDbModel() = com.arclights.expensecalculator.db.Calculation(
-        this.id,
-        this.year,
-        this.month,
-        this.personalCalculations.toDbIncomes(),
-        this.expenses.toDbModel(),
-        this.personalCalculations.toDbPersonalExpense()
+    this.id,
+    this.year,
+    this.month,
+    this.personalCalculations.toDbIncomes(),
+    this.expenses.toDbModel(),
+    this.personalCalculations.toDbPersonalExpense()
 )
 
 private fun List<PersonCalculation>.toDbIncomes(): List<DbIncome> = this.map {
     DbIncome(
-            it.income.amount,
-            it.income.comment,
-            it.person
+        it.income.amount,
+        it.income.comment,
+        it.person
     )
 }
 
 private fun List<PersonCalculation>.toDbPersonalExpense(): List<PersonalExpense> = this.map {
     PersonalExpense(
-            it.person,
-            it.expenseCorrections.map { it.toDbModel() }
+        it.person,
+        it.expenseCorrections.map { it.toDbModel() }
     )
 }
 
-private fun PersonalExpenseCorrection.toDbModel(): com.arclights.expensecalculator.db.PersonalExpenseCorrection = com.arclights.expensecalculator.db.PersonalExpenseCorrection(
+private fun PersonalExpenseCorrection.toDbModel(): com.arclights.expensecalculator.db.PersonalExpenseCorrection =
+    com.arclights.expensecalculator.db.PersonalExpenseCorrection(
         this.id,
         this.amount,
         this.comment,
         this.category
-)
+    )
 
 private fun List<Expense>.toDbModel(): List<com.arclights.expensecalculator.db.Expense> = this.map {
     com.arclights.expensecalculator.db.Expense(
-            it.amount,
-            it.comment,
-            it.card.toDbModel()
+        it.amount,
+        it.comment,
+        it.card.toDbModel()
     )
 }
 
 private fun com.arclights.expensecalculator.db.Calculation.toServiceModel(): Calculation = Calculation(
-        this.id,
-        this.year,
-        this.month,
-        toPersonalCalculations(this.personalExpenseCorrections, this.incomes),
-        this.expenses.toServiceModel()
+    this.id,
+    this.year,
+    this.month,
+    toPersonalCalculations(this.personalExpenseCorrections, this.incomes),
+    this.expenses.toServiceModel()
 )
 
 private fun List<com.arclights.expensecalculator.db.Expense>.toServiceModel(): List<Expense> = this.map {
     Expense(
-            it.amount,
-            it.comment,
-            it.card.toServiceModel()
+        it.amount,
+        it.comment,
+        it.card.toServiceModel()
     )
 }
 
 private fun com.arclights.expensecalculator.db.Card.toServiceModel(): Card = Card(
-        this.id,
-        this.name,
-        this.comment
+    this.id,
+    this.name,
+    this.comment
 )
 
 private fun Card.toDbModel(): com.arclights.expensecalculator.db.Card = com.arclights.expensecalculator.db.Card(
-        this.id,
-        this.name,
-        this.comment
+    this.id,
+    this.name,
+    this.comment
 )
 
 private fun toPersonalCalculations(
-        personalExpenseCorrections: List<PersonalExpense>,
-        incomes: List<com.arclights.expensecalculator.db.Income>
+    personalExpenseCorrections: List<PersonalExpense>,
+    incomes: List<com.arclights.expensecalculator.db.Income>
 ): List<PersonCalculation> {
     val expensesPerPerson = personalExpenseCorrections.groupBy { it.person }
     val incomesPerPerson = incomes.groupBy { it.person }
 
     return mapZip(incomesPerPerson, expensesPerPerson, emptyList(), emptyList()) {
         PersonCalculation(
-                it.first,
-                it.second.first().toServiceModel(),
-                it.third.toServicePersonalExpenses()
+            it.first,
+            it.second.first().toServiceModel(),
+            it.third.toServicePersonalExpenses()
         )
     }
 }
 
-private fun List<PersonalExpense>.toServicePersonalExpenses(): List<PersonalExpenseCorrection> = this.flatMap { personalExpense ->
-    personalExpense.corrections.map {
-        PersonalExpenseCorrection(
+private fun List<PersonalExpense>.toServicePersonalExpenses(): List<PersonalExpenseCorrection> =
+    this.flatMap { personalExpense ->
+        personalExpense.corrections.map {
+            PersonalExpenseCorrection(
                 it.id,
                 it.amount,
                 it.comment,
                 it.category
-        )
+            )
+        }
     }
-}
 
 private fun com.arclights.expensecalculator.db.Income.toServiceModel(): Income = Income(
-        this.amount,
-        this.comment,
-        this.person
+    amount,
+    comment
 )
 
 private fun <T, V1, V2, MV> mapZip(
-        map1: Map<T, V1>,
-        map2: Map<T, V2>,
-        emptyValue1: V1,
-        emptyValue2: V2,
-        mappingFn: (Triple<T, V1, V2>) -> MV
+    map1: Map<T, V1>,
+    map2: Map<T, V2>,
+    emptyValue1: V1,
+    emptyValue2: V2,
+    mappingFn: (Triple<T, V1, V2>) -> MV
 ): List<MV> = mapZip(map1, map2, emptyValue1, emptyValue2).map(mappingFn)
 
 private fun <T, V1, V2> mapZip(
-        map1: Map<T, V1>,
-        map2: Map<T, V2>,
-        emptyValue1: V1,
-        emptyValue2: V2
+    map1: Map<T, V1>,
+    map2: Map<T, V2>,
+    emptyValue1: V1,
+    emptyValue2: V2
 ): List<Triple<T, V1, V2>> {
     val keys1 = map1.keys
     val keys2 = map2.keys
