@@ -16,19 +16,25 @@ class PersonalExpensesDao(private val dsl: DefaultDSLContext) {
         calculationId: CalculationId,
         personalExpenses: List<PersonalExpense>
     ): Flux<PersonalExpenseCorrectionId> =
-        Flux.mergeSequential(personalExpenses.map { createOrUpdatePersonalExpense(calculationId, it) })
+        Flux.fromIterable(personalExpenses).flatMap { createOrUpdatePersonalExpense(calculationId, it) }
 
     fun createOrUpdatePersonalExpense(
         calculationId: CalculationId,
         personalExpense: PersonalExpense
-    ): Flux<PersonalExpenseCorrectionId> = Flux
-        .mergeSequential(personalExpense.corrections.map {
-            createOrUpdatePersonalExpenseCorrection(
-                calculationId,
-                personalExpense.person.id!!,
-                it
-            )
-        })
+    ): Flux<PersonalExpenseCorrectionId> {
+        val incomingIds = personalExpense.corrections.mapNotNull { it.id }.toSet()
+        return getIdsForExpenseCorrectionsInCalculation(calculationId)
+            .filter { incomingIds.contains(it).not() }
+            .flatMap(this::delete)
+            .thenMany(Flux.fromIterable(personalExpense.corrections))
+            .flatMap {
+                createOrUpdatePersonalExpenseCorrection(
+                    calculationId,
+                    personalExpense.person.id!!,
+                    it
+                )
+            }
+    }
 
     private fun createOrUpdatePersonalExpenseCorrection(
         calculationId: CalculationId,
@@ -78,6 +84,25 @@ class PersonalExpensesDao(private val dsl: DefaultDSLContext) {
             }
             .map { it.id }
 
+    private fun getIdsForExpenseCorrectionsInCalculation(calculationId: CalculationId): Flux<PersonalExpenseCorrectionId> =
+        Flux
+            .from(
+                dsl.select(PERSONAL_EXPENSE_CORRECTIONS.ID)
+                    .from(PERSONAL_EXPENSE_CORRECTIONS)
+                    .where(PERSONAL_EXPENSE_CORRECTIONS.MONTHLY_CALCULATION_ID.eq(calculationId))
+            )
+            .map { it.get(PERSONAL_EXPENSE_CORRECTIONS.ID) }
+
+    fun delete(personalExpenseCorrectionId: PersonalExpenseCorrectionId): Mono<PersonalExpenseCorrectionId> =
+        Mono
+            .fromCallable {
+                dsl.deleteFrom(PERSONAL_EXPENSE_CORRECTIONS)
+                    .where(PERSONAL_EXPENSE_CORRECTIONS.ID.eq(personalExpenseCorrectionId))
+                    .returning(PERSONAL_EXPENSE_CORRECTIONS.ID)
+                    .fetchOne()
+            }
+            .map { it.id }
+
     fun getPersonalExpense(calculationId: CalculationId, personId: PersonId): Mono<PersonalExpense> = Flux
         .from(
             dsl.select(
@@ -98,12 +123,12 @@ class PersonalExpensesDao(private val dsl: DefaultDSLContext) {
                 .and(PERSONAL_EXPENSE_CORRECTIONS.PERSON_ID.eq(personId))
         )
         .collectList()
-        .map { mapPersonalExpense(it) }
+        .map(::mapPersonalExpense)
 }
 
 private fun mapPersonalExpense(r: List<Record>): PersonalExpense = PersonalExpense(
     mapPerson(r.first()),
-    r.map { mapPersonalExpenseCorrection(it) }
+    r.map(::mapPersonalExpenseCorrection)
 )
 
 private fun mapPersonalExpenseCorrection(r: Record): PersonalExpenseCorrection = PersonalExpenseCorrection(
