@@ -12,7 +12,16 @@ import reactor.core.publisher.Mono
 class IncomesDao(private val dsl: DefaultDSLContext) {
 
     fun createUpdateIncomes(calculationId: CalculationId, incomes: List<Income>): Flux<Pair<CalculationId, PersonId>> =
-        Flux.mergeSequential(incomes.map { createOrUpdateIncome(calculationId, it) })
+        deleteNotIncludedEntries(calculationId, incomes)
+            .thenMany(Flux.fromIterable(incomes))
+            .flatMap { createOrUpdateIncome(calculationId, it) }
+
+    private fun deleteNotIncludedEntries(calculationId: CalculationId, incomes: List<Income>): Flux<PersonId> {
+        val incomingPersonIds = incomes.mapNotNull { it.person.id }.toSet()
+        return getPersonIdsForCalculationId(calculationId)
+            .filter { incomingPersonIds.contains(it).not() }
+            .flatMap { deleteIncome(calculationId, it) }
+    }
 
     fun createOrUpdateIncome(calculationId: CalculationId, income: Income): Mono<Pair<CalculationId, PersonId>> =
         getIncome(calculationId, income.person)
@@ -56,6 +65,26 @@ class IncomesDao(private val dsl: DefaultDSLContext) {
                 .and(INCOMES.PERSON_ID.eq(person.id))
         )
         .map { mapIncome(it) }
+
+    private fun getPersonIdsForCalculationId(calculationId: CalculationId): Flux<PersonId> = Flux
+        .from(
+            dsl
+                .select(INCOMES.PERSON_ID)
+                .from(INCOMES)
+                .where(INCOMES.MONTHLY_CALCULATION_ID.eq(calculationId))
+        )
+        .map { it.get(INCOMES.PERSON_ID) }
+
+    private fun deleteIncome(calculationId: CalculationId, personId: PersonId): Mono<PersonId> = Mono
+        .fromCallable {
+            dsl
+                .deleteFrom(INCOMES)
+                .where(INCOMES.MONTHLY_CALCULATION_ID.eq(calculationId))
+                .and(INCOMES.PERSON_ID.eq(personId))
+                .returning(INCOMES.PERSON_ID)
+                .fetchOne()
+        }
+        .map { it.personId }
 }
 
 private fun mapIncome(r: Record): Income = Income(

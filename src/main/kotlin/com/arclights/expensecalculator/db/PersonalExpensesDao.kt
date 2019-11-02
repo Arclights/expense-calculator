@@ -21,11 +21,8 @@ class PersonalExpensesDao(private val dsl: DefaultDSLContext) {
     fun createOrUpdatePersonalExpense(
         calculationId: CalculationId,
         personalExpense: PersonalExpense
-    ): Flux<PersonalExpenseCorrectionId> {
-        val incomingIds = personalExpense.corrections.mapNotNull { it.id }.toSet()
-        return getIdsForExpenseCorrectionsInCalculation(calculationId)
-            .filter { incomingIds.contains(it).not() }
-            .flatMap(this::delete)
+    ): Flux<PersonalExpenseCorrectionId> =
+        deleteNotIncludedEntries(calculationId, personalExpense)
             .thenMany(Flux.fromIterable(personalExpense.corrections))
             .flatMap {
                 createOrUpdatePersonalExpenseCorrection(
@@ -34,6 +31,15 @@ class PersonalExpensesDao(private val dsl: DefaultDSLContext) {
                     it
                 )
             }
+
+    private fun deleteNotIncludedEntries(
+        calculationId: CalculationId,
+        personalExpense: PersonalExpense
+    ): Flux<PersonalExpenseCorrectionId> {
+        val incomingIds = personalExpense.corrections.mapNotNull { it.id }.toSet()
+        return getIdsForExpenseCorrectionsInCalculation(calculationId)
+            .filter { incomingIds.contains(it).not() }
+            .flatMap(this::delete)
     }
 
     private fun createOrUpdatePersonalExpenseCorrection(

@@ -13,15 +13,16 @@ import reactor.core.publisher.Mono
 class ExpensesDao(private val dsl: DefaultDSLContext) {
 
     @Transactional
-    fun createUpdateExpenses(calculationId: CalculationId, expenses: List<Expense>): Flux<Pair<CalculationId, CardId>> {
-        val incomingCardIds = expenses.map { it.card.id }.toSet()
+    fun createUpdateExpenses(calculationId: CalculationId, expenses: List<Expense>): Flux<Pair<CalculationId, CardId>> =
+        deleteNotIncludedEntries(calculationId, expenses)
+            .thenMany(Flux.fromIterable(expenses))
+            .flatMap { createOrUpdateExpense(calculationId, it) }
+
+    private fun deleteNotIncludedEntries(calculationId: CalculationId, expenses: List<Expense>): Flux<Expense> {
+        val incomingCardIds = expenses.mapNotNull { it.card.id }.toSet()
         return getIdsForExistingExpenses(calculationId)
             .filter { incomingCardIds.contains(it.second).not() }
             .flatMap { deleteExpense(it.first, it.second) }
-            .collectList()
-            .thenMany(
-                Flux.mergeSequential(expenses.map { createOrUpdateExpense(calculationId, it) })
-            )
     }
 
     fun createOrUpdateExpense(calculationId: CalculationId, expense: Expense): Mono<Pair<CalculationId, CardId>> =
